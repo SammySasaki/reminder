@@ -4,6 +4,7 @@ import cors from 'cors';
 import askRouter from './routes/ask.js';
 import transcribeRouter from './routes/transcribe.js';
 import instructionsRouter from './routes/instructions.js';
+import configRouter from './routes/config.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/ask', askRouter);
 app.use('/api/transcribe', transcribeRouter);
 app.use('/api/instructions', instructionsRouter);
+app.use('/api/config', configRouter);
 // Logs are served at /api/instructions/logs (handled by instructionsRouter)
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

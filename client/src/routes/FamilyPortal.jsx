@@ -7,6 +7,7 @@ import InstructionForm from '../components/InstructionForm.jsx';
 import BulkUpload from '../components/BulkUpload.jsx';
 import LogsTable from '../components/LogsTable.jsx';
 import { getInstructions, createInstruction, updateInstruction, deleteInstruction } from '../lib/api.js';
+import GeneralConfig from '../components/GeneralConfig.jsx';
 
 const TABS = ['Instructions', 'Bulk Upload', 'Question Logs', 'Settings'];
 
@@ -136,6 +137,10 @@ export default function FamilyPortal() {
             Controls the language of the assistant screen (speech recognition, answers, and voice).<br />
             This portal is always in English.
           </p>
+
+          <div style={{ marginTop: '2rem' }}>
+            <GeneralConfig />
+          </div>
 
           <div style={{ marginTop: '2rem', background: '#22223b', borderRadius: 8, padding: '1rem' }}>
             <p style={{ color: '#aaa', fontSize: '0.9rem' }}>

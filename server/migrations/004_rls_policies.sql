@@ -21,3 +21,12 @@ CREATE POLICY "anon can log questions"
 
 CREATE POLICY "authenticated can read logs"
   ON question_logs FOR SELECT TO authenticated USING (true);
+
+GRANT SELECT ON instructions TO anon;
+GRANT INSERT ON question_logs TO anon;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON instructions TO authenticated;
+GRANT SELECT ON question_logs TO authenticated;
+
+GRANT ALL ON instructions TO service_role;
+GRANT ALL ON question_logs TO service_role;

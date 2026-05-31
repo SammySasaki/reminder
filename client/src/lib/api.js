@@ -67,6 +67,23 @@ export async function deleteInstruction(id) {
   return res.json();
 }
 
+export async function getConfig() {
+  const res = await fetch(`${API_BASE}/api/config`);
+  if (!res.ok) throw new Error('Failed to load config');
+  return res.json();
+}
+
+export async function updateConfig(info) {
+  const headers = await getAuthHeader();
+  const res = await fetch(`${API_BASE}/api/config`, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ info }),
+  });
+  if (!res.ok) throw new Error('Failed to save config');
+  return res.json();
+}
+
 export async function getLogs() {
   const headers = await getAuthHeader();
   const res = await fetch(`${API_BASE}/api/instructions/logs`, { headers });

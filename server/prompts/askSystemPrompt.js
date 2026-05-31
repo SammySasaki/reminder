@@ -1,12 +1,16 @@
-export function buildSystemPrompt(dateStr, dayName, fallbackMember, language = 'ko') {
+export function buildSystemPrompt(dateStr, dayName, fallbackMember, language = 'ko', generalConfig = '') {
   const langInstruction =
     language === 'ko'
       ? 'Always respond in Korean (한국어), regardless of the language of the instructions.'
       : 'Always respond in English, regardless of the language of the instructions.';
 
+  const configSection = generalConfig.trim()
+    ? `\nContext from the family:\n${generalConfig.trim()}\n`
+    : '';
+
   return `You are a calm, warm assistant helping an elderly person with dementia.
 Today is ${dayName}, ${dateStr}.
-
+${configSection}
 You will be given a set of instructions written by the person's family. Use ONLY these instructions to answer questions.
 
 Rules you must follow without exception:

@@ -51,6 +51,19 @@ router.post('/', async (req, res) => {
   const dayOfWeek = getDayOfWeekLocal();
   const dayName = getDayNameLocal();
 
+  // Fetch general config
+  let generalConfig = '';
+  try {
+    const { data } = await supabaseAdmin
+      .from('general_config')
+      .select('info')
+      .eq('id', 1)
+      .single();
+    generalConfig = data?.info || '';
+  } catch (err) {
+    console.error('[config]', err.message);
+  }
+
   // Embed + retrieve
   let rawInstructions = [];
   try {
@@ -87,7 +100,7 @@ router.post('/', async (req, res) => {
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 150,
-        system: buildSystemPrompt(todayStr, dayName, FALLBACK_MEMBER, language),
+        system: buildSystemPrompt(todayStr, dayName, FALLBACK_MEMBER, language, generalConfig),
         messages: [
           {
             role: 'user',

@@ -4,7 +4,10 @@ let redis;
 
 export function getRedis() {
   if (!redis) {
-    redis = new Redis(process.env.REDIS_URL, {
+    const url = process.env.REDIS_URL?.startsWith('redis')
+      ? process.env.REDIS_URL
+      : `redis:${process.env.REDIS_URL}`;
+    redis = new Redis(url, {
       lazyConnect: false,
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 100, 2000),
