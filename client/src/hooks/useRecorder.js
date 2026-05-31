@@ -12,9 +12,14 @@ export function useRecorder() {
     const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
     const supported = preferred.find((t) => MediaRecorder.isTypeSupported(t));
     chunksRef.current = [];
-    const mr = supported
-      ? new MediaRecorder(stream, { mimeType: supported })
-      : new MediaRecorder(stream);
+    let mr;
+    try {
+      mr = supported
+        ? new MediaRecorder(stream, { mimeType: supported })
+        : new MediaRecorder(stream);
+    } catch {
+      mr = new MediaRecorder(stream);
+    }
     mimeTypeRef.current = mr.mimeType || 'audio/mp4';
     mediaRecorderRef.current = mr;
     mr.ondataavailable = (e) => {
