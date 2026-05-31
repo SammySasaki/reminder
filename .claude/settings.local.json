@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($bundle = Get-Content \"C:\\\\Users\\\\sasak\\\\reminder\\\\client\\\\dist\\\\assets\\\\index-COUzUd41.js\" -Raw; $secrets = @\\(\"SERVICE_ROLE_KEY\",\"OPENAI_API_KEY\",\"ANTHROPIC_API_KEY\",\"REDIS_URL\",\"SUPABASE_SERVICE\"\\); $found = $secrets | Where-Object { $bundle -match $_ }; if \\($found\\) { Write-Host \"SECRET LEAKED: $found\" } else { Write-Host \"No secrets found in bundle\" })"
+    ]
+  }
+}
