@@ -9,12 +9,13 @@ export function useRecorder() {
 
   const start = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-      ? 'audio/webm;codecs=opus'
-      : 'audio/mp4';
-    mimeTypeRef.current = mimeType;
+    const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+    const supported = preferred.find((t) => MediaRecorder.isTypeSupported(t));
     chunksRef.current = [];
-    const mr = new MediaRecorder(stream, { mimeType });
+    const mr = supported
+      ? new MediaRecorder(stream, { mimeType: supported })
+      : new MediaRecorder(stream);
+    mimeTypeRef.current = mr.mimeType || 'audio/mp4';
     mediaRecorderRef.current = mr;
     mr.ondataavailable = (e) => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
