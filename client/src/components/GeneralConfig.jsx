@@ -15,6 +15,12 @@ export default function GeneralConfig() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!saved) return;
+    const t = setTimeout(() => setSaved(false), 2000);
+    return () => clearTimeout(t);
+  }, [saved]);
+
   const handleSave = async () => {
     setSaving(true);
     setError('');
@@ -22,7 +28,6 @@ export default function GeneralConfig() {
     try {
       await updateConfig(info);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -43,6 +48,7 @@ export default function GeneralConfig() {
           value={info}
           onChange={(e) => setInfo(e.target.value)}
           rows={8}
+          maxLength={2000}
           placeholder={"e.g.\nName: Grandma Rose\nFamily: Daughter Eda (primary contact, 010-1234-5678), Son David\nDoctor: Dr. Kim at Seoul Clinic\nAlways speak slowly and reassuringly."}
         />
       </div>

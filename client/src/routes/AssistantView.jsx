@@ -68,10 +68,10 @@ export default function AssistantView() {
         setQuestion(transcription);
         setUiState('answering');
 
-        const { answer: ans, audioBase64 } = await askQuestion(transcription, lang);
+        const { answer: ans, audioBase64, audioError } = await askQuestion(transcription, lang);
         setAnswer(ans);
         setUiState('answered');
-        if (audioBase64) player.play(audioBase64);
+        if (audioBase64 && !audioError) player.play(audioBase64);
       } catch (err) {
         console.error(err);
         recorder.cancel();

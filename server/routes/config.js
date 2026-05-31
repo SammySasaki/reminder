@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
+import { getRedis } from '../lib/redis.js';
 
 const router = Router();
 
@@ -28,12 +29,14 @@ router.put('/', async (req, res) => {
 
   const { info } = req.body;
   if (typeof info !== 'string') return res.status(400).json({ error: 'info must be a string' });
+  if (info.length > 2000) return res.status(400).json({ error: 'info must be 2000 characters or fewer' });
 
   const { error } = await supabaseAdmin
     .from('general_config')
     .upsert({ id: 1, info, updated_at: new Date().toISOString() });
 
   if (error) return res.status(500).json({ error: error.message });
+  try { await getRedis().del('general_config'); } catch { /* non-fatal */ }
   return res.json({ ok: true });
 });
 

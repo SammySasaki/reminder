@@ -18,7 +18,13 @@ async function bustTodayCache() {
   try {
     const redis = getRedis();
     const today = getTodayLocal();
-    const keys = await redis.keys(`ask:*:${today}`);
+    const keys = [];
+    let cursor = '0';
+    do {
+      const [next, batch] = await redis.scan(cursor, 'MATCH', `ask:*:${today}`);
+      keys.push(...batch);
+      cursor = next;
+    } while (cursor !== '0');
     if (keys.length > 0) await redis.del(...keys);
   } catch (err) {
     console.error('[cache bust]', err.message);

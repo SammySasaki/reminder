@@ -28,7 +28,8 @@ async function logQuestion({ raw_question, normalized_question, answered_confide
 }
 
 router.post('/', async (req, res) => {
-  const { question: raw, language = process.env.DEFAULT_STT_LANGUAGE || 'ko' } = req.body;
+  const { question: raw, language: rawLang = process.env.DEFAULT_STT_LANGUAGE || 'ko' } = req.body;
+  const language = ['ko', 'en'].includes(rawLang) ? rawLang : 'ko';
   if (!raw || typeof raw !== 'string') {
     return res.status(400).json({ error: 'question is required' });
   }
@@ -37,12 +38,15 @@ router.post('/', async (req, res) => {
   const todayStr = getTodayLocal();
   const cacheKey = `ask:${normalized}:${todayStr}`;
 
+  // Get Redis once for the whole handler
+  let redis;
+  try { redis = getRedis(); } catch (err) { console.error('[redis init]', err.message); }
+
   // Cache check
   try {
-    const redis = getRedis();
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return res.json(JSON.parse(cached));
+    if (redis) {
+      const cached = await redis.get(cacheKey);
+      if (cached) return res.json(JSON.parse(cached));
     }
   } catch (err) {
     console.error('[cache read]', err.message);
@@ -51,15 +55,21 @@ router.post('/', async (req, res) => {
   const dayOfWeek = getDayOfWeekLocal();
   const dayName = getDayNameLocal();
 
-  // Fetch general config
+  // Fetch general config — Redis-first, fallback to Supabase
   let generalConfig = '';
   try {
-    const { data } = await supabaseAdmin
-      .from('general_config')
-      .select('info')
-      .eq('id', 1)
-      .single();
-    generalConfig = data?.info || '';
+    const cachedConfig = redis ? await redis.get('general_config') : null;
+    if (cachedConfig !== null && cachedConfig !== undefined) {
+      generalConfig = cachedConfig;
+    } else {
+      const { data } = await supabaseAdmin
+        .from('general_config')
+        .select('info')
+        .eq('id', 1)
+        .single();
+      generalConfig = data?.info || '';
+      if (redis) await redis.set('general_config', generalConfig, 'EX', 3600);
+    }
   } catch (err) {
     console.error('[config]', err.message);
   }
@@ -84,6 +94,8 @@ router.post('/', async (req, res) => {
 
   let answer;
   let confident;
+  let audioBase64 = '';
+  let audioError = false;
 
   const notSureKo = `잘 모르겠어요. ${FALLBACK_MEMBER}에게 물어봐 주세요.`;
   const notSureEn = `I'm not sure. Please ask ${FALLBACK_MEMBER}.`;
@@ -91,6 +103,20 @@ router.post('/', async (req, res) => {
   if (maxSimilarity < SIMILARITY_THRESHOLD) {
     answer = language === 'ko' ? notSureKo : notSureEn;
     confident = false;
+    // Fallback TTS is a fixed string — cache it long-term
+    const fallbackKey = `tts_fallback:${language}`;
+    try {
+      const cachedFallback = redis ? await redis.get(fallbackKey) : null;
+      if (cachedFallback) {
+        audioBase64 = cachedFallback;
+      } else {
+        audioBase64 = await generateSpeechBase64(answer);
+        if (redis) await redis.set(fallbackKey, audioBase64, 'EX', 2592000);
+      }
+    } catch (err) {
+      console.error('[tts-fallback]', err.message);
+      audioError = true;
+    }
   } else {
     try {
       const instructionsText = filtered
@@ -115,22 +141,20 @@ router.post('/', async (req, res) => {
       answer = language === 'ko' ? notSureKo : notSureEn;
       confident = false;
     }
+    // TTS for dynamic answers (not cacheable — unique per answer)
+    try {
+      audioBase64 = await generateSpeechBase64(answer);
+    } catch (err) {
+      console.error('[tts]', err.message);
+      audioError = true;
+    }
   }
 
-  // TTS
-  let audioBase64 = '';
-  try {
-    audioBase64 = await generateSpeechBase64(answer);
-  } catch (err) {
-    console.error('[tts]', err.message);
-  }
-
-  const payload = { answer, confident, audioBase64 };
+  const payload = { answer, confident, audioBase64, audioError };
 
   // Cache write
   try {
-    const redis = getRedis();
-    await redis.set(cacheKey, JSON.stringify(payload), 'EX', 172800);
+    if (redis) await redis.set(cacheKey, JSON.stringify(payload), 'EX', 172800);
   } catch (err) {
     console.error('[cache write]', err.message);
   }

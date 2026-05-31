@@ -22,6 +22,7 @@ export function useAudioPlayer() {
     }
     const audio = new Audio(`data:audio/mp3;base64,${base64mp3}`);
     currentRef.current = audio;
+    audio.addEventListener('ended', () => { currentRef.current = null; });
     audio.play().catch((err) => console.warn('[audio play]', err.message));
     return audio;
   };

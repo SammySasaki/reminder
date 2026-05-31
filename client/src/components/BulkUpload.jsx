@@ -15,23 +15,29 @@ export default function BulkUpload({ onDone }) {
     setError('');
     setProgress(`0 / ${lines.length} uploading…`);
 
-    let done = 0;
-    try {
-      await Promise.all(
-        lines.map(async (content) => {
-          await createInstruction({ content, category: 'other', schedule_relevance: 'everyday' });
-          done++;
-          setProgress(`${done} / ${lines.length} done`);
-        })
-      );
+    let completed = 0;
+    const results = await Promise.allSettled(
+      lines.map(async (content) => {
+        const r = await createInstruction({ content, category: 'other', schedule_relevance: 'everyday' });
+        completed++;
+        setProgress(`${completed} / ${lines.length} uploading…`);
+        return r;
+      })
+    );
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.length - succeeded;
+
+    if (failed > 0) {
+      setError(`${failed} item(s) failed to upload.`);
+      setProgress(`${succeeded} / ${lines.length} uploaded`);
+    } else {
       setText('');
       setProgress('');
-      onDone();
-    } catch (err) {
-      setError('Some items failed to upload: ' + err.message);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
+    if (succeeded > 0) onDone();
   };
 
   return (

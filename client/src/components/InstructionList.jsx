@@ -28,7 +28,7 @@ export default function InstructionList({ instructions, onEdit, onDelete }) {
             <p className="meta">
               {CATEGORY_LABELS[inst.category]} · {RELEVANCE_LABELS[inst.schedule_relevance]}
               {inst.schedule_relevance === 'specific_days' && inst.specific_days?.length > 0
-                ? ` (${inst.specific_days.sort((a, b) => a - b).map((d) => DAYS[d]).join(', ')})`
+                ? ` (${[...inst.specific_days].sort((a, b) => a - b).map((d) => DAYS[d]).join(', ')})`
                 : ''}
             </p>
           </div>

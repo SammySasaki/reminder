@@ -35,6 +35,10 @@ export default function InstructionForm({ instruction, onSave, onCancel, loading
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (form.schedule_relevance === 'specific_days' && form.specific_days.length === 0) {
+      alert('Please select at least one day.');
+      return;
+    }
     const data = { ...form };
     if (data.schedule_relevance !== 'specific_days') data.specific_days = null;
     onSave(data);
